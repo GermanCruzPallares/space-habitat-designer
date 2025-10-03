@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NASA Hackathon - Three.js Model Viewer</title>
+    <style>
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background-color: #000;
+        }
+        canvas { 
+            display: block; 
+        }
+        #panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+        }
+        button {
+            background: #2ecc71;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #27ae60;
+        }
+    </style>
+</head>
+<body>
+    <!-- Panel de controles -->
+    <div id="panel">
+        <h3>Controles NASA Hackathon</h3>
+        <button onclick="addBox()">Agregar Caja</button>
+        <p>Usa el mouse para rotar y desplazarte</p>
+        <p>Click en "Agregar Caja" para colocar cajas</p>
+    </div>
+
+    <!-- three.js se cargará aquí -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/controls/OrbitControls.js"></script>
+    
+    <script>
+        // Variables globales
+        let scene, camera, renderer, controls;
+        
+        // Inicializar la aplicación three.js
+        function init() {
+            // 1. Crear la escena (el mundo 3D donde todo existe)
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x111122); // Fondo azul oscuro espacial
+            
+            // 2. Crear la cámara (los ojos que ven la escena)
+            camera = new THREE.PerspectiveCamera(
+                75, // Campo de visión (como un lente gran angular)
+                window.innerWidth / window.innerHeight, // Relación de aspecto
+                0.1, // Distancia mínima de visualización
+                1000 // Distancia máxima de visualización
+            );
+            camera.position.set(5, 5, 5); // Posicionar la cámara en el espacio 3D
+            
+            // 3. Crear el renderizador (el motor que dibuja todo)
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+            
+            // 4. Agregar controles de órbita (para rotar y hacer zoom con el mouse)
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true; // Suavizado del movimiento
+            controls.dampingFactor = 0.25;
+            
+            // 5. Agregar iluminación básica
+            const ambientLight = new THREE.AmbientLight(0x404040, 2); // Luz ambiental suave
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(10, 10, 5);
+            scene.add(directionalLight);
+            
+            // 6. Agregar ejes de referencia (opcional, ayuda a orientarse)
+            const axesHelper = new THREE.AxesHelper(5);
+            scene.add(axesHelper);
+            
+            // 7. Cargar modelos JSON automáticamente al iniciar
+            loadJSONModel('./models/model1.json'); // Cambia esta ruta por la de tu JSON
+            
+            // 8. Iniciar el bucle de animación
+            animate();
+            
+            // 9. Manejar redimensionado de ventana
+            window.addEventListener('resize', onWindowResize);
+        }
+        
+        // Función para cargar modelos 3D desde archivos JSON
+        function loadJSONModel(url) {
+            // ObjectLoader es el cargador moderno para archivos JSON de three.js:cite[4]
+            const loader = new THREE.ObjectLoader();
+            
+            loader.load(
+                url,
+                // Función que se ejecuta cuando el modelo se carga exitosamente
+                function (obj) {
+                    console.log('Modelo cargado exitosamente:', obj);
+                    scene.add(obj); // Agregar el modelo cargado a la escena
+                    
+                    // Ajustar la cámara para enfocar el modelo:cite[1]
+                    const box = new THREE.Box3().setFromObject(obj);
+                    const center = box.getCenter(new THREE.Vector3());
+                    const size = box.getSize(new THREE.Vector3());
+                    
+                    // Posicionar la cámara para ver todo el modelo
+                    camera.position.copy(center);
+                    camera.position.x += size.length();
+                    camera.position.y += size.length();
+                    camera.position.z += size.length();
+                    camera.lookAt(center);
+                },
+                // Función que muestra progreso de carga (opcional)
+                function (xhr) {
+                    console.log((xhr.loaded / xhr.total * 100) + '% cargado');
+                },
+                // Función que maneja errores de carga
+                function (err) {
+                    console.error('Error cargando el modelo:', err);
+                    // Crear una caja como respaldo si falla la carga
+                    createFallbackGeometry();
+                }
+            );
+        }
+        
+        // Función para crear geometría de respaldo si falla la carga del modelo
+        function createFallbackGeometry() {
+            const geometry = new THREE.BoxGeometry(2, 2, 2);
+            const material = new THREE.MeshStandardMaterial({ 
+                color: 0xff0000, // Color rojo para indicar error
+                wireframe: true 
+            });
+            const cube = new THREE.Mesh(geometry, material);
+            scene.add(cube);
+            console.log('Geometría de respaldo creada');
+        }
+        
+        // Función para agregar cajas al panel (como elementos arrastrables)
+        function addBox() {
+            // Crear una caja básica:cite[6]
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const material = new THREE.MeshStandardMaterial({ 
+                color: Math.random() * 0xffffff, // Color aleatorio
+                metalness: 0.3,
+                roughness: 0.4
+            });
+            const box = new THREE.Mesh(geometry, material);
+            
+            // Posicionar la caja en un lugar aleatorio frente a la cámara
+            box.position.set(
+                (Math.random() - 0.5) * 10,
+                (Math.random() - 0.5) * 10,
+                (Math.random() - 0.5) * 10
+            );
+            
+            // Rotación aleatoria para hacerlo más interesante
+            box.rotation.set(
+                Math.random() * Math.PI,
+                Math.random() * Math.PI,
+                Math.random() * Math.PI
+            );
+            
+            scene.add(box);
+            console.log('Caja agregada en posición:', box.position);
+        }
+        
+        // Bucle de animación (se ejecuta ~60 veces por segundo)
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update(); // Actualizar controles
+            renderer.render(scene, camera); // Dibujar la escena
+        }
+        
+        // Manejar redimensionado de ventana
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        // Iniciar la aplicación cuando se cargue la página
+        window.onload = init;
+    </script>
+</body>
+</html>
