@@ -128,7 +128,7 @@ export default function SpaceHabitatDesigner() {
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x0a0a0a);
-    scene.fog = new THREE.Fog(0x0a0a0a, 30, 60);
+    
 
     const camera = new THREE.PerspectiveCamera(
       60,
@@ -143,7 +143,7 @@ export default function SpaceHabitatDesigner() {
       alpha: true
     });
     renderer.setSize(canvasRef.current.clientWidth, canvasRef.current.clientHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 20000));
 
     // Enhanced lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
