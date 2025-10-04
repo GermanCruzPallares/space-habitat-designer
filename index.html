@@ -87,6 +87,11 @@
         margin: 0;
         font-weight: bold;
       }
+
+      .textoMuerte{
+        visibility: hidden;
+        color: red;
+      }
     </style>
   </head>
   <body>
@@ -99,6 +104,10 @@
       </div>
       <div>
         <p>Tripulacion: <input id="Tripu" class="tripuInput" value="1" /></p>
+        <p>Tiempo: <input id="Tiempo" class="tripuInput" value="2 years" /></p>
+      </div>
+      <div>
+        <p id="muerte" class="textoMuerte">¡No van a sobrevivir tanto tiempo!</p>
       </div>
     </div>
 
@@ -117,6 +126,8 @@
       width: 2,
       height: 1,
       depth: 2,
+      resistenciaPresionAtmosferica: 1,
+      temperaturaMedia: 22
     },
     Inflable: {
       url: "./models/Inflable.glb",
@@ -124,6 +135,8 @@
       tipe: "Inflable",
       radius: 1,
       height: 1.5,
+      resistenciaPresionAtmosferica: 1,
+      temperaturaMedia: 22
     },
     "In situ": {
       url: "./models/InSitu.glb",
@@ -134,6 +147,20 @@
       depth: 3,
     },
   };
+
+  const  Marte= {
+    gravedad: 0.38,
+    temperatura: {
+      media: -63 ,
+      minima: -140 ,
+      maxima: 20 
+    },
+    presion_atmosferica: 0.6,
+    composicion_atmosfera: "95% CO2, 2.7% N2, 1.6% Ar",
+    radiacion: "Alta, sin magnetosfera",
+    riesgos: ["tormentas de polvo globales", "radiación cósmica", "vientos débiles"],
+    recursos_utilizables: ["regolito", "CO2 atmosférico", "agua congelada en polos y subsuelo"]
+  }
 
   // Creación del renderer (motor de renderizado WebGL)
   let renderer;
@@ -308,12 +335,22 @@
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
-
+    //Funcion para calcular el tiempo
+    function calcularPosibilidad(tripulantes, tiempo){
+        console.log(`Tripulantes: ${tripulantes}`)
+        console.log(`Tiempo: ${tiempo}`)
+        let texto = document.getElementById("muerte").style
+        texto.visibility = "visible"
+    }
   // Sistema de enfoque (focus) al hacer clic en un modelo
   let focusAnimation = null;
   renderer.domElement.addEventListener("click", (e) => {
     mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    //AQUI VA MI CODIGO
+    let tripulantes = document.getElementById("Tripu").value
+    let tiempo = document.getElementById("Tiempo").value
+    calcularPosibilidad(tripulantes,tiempo)
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(clickableObjects, true);
     if (intersects.length > 0) {
@@ -344,6 +381,10 @@
 
     // Animación de transición de cámara hacia el objeto
     function animateFocus(timestamp) {
+        
+        
+
+
       if (!animateFocus.start) animateFocus.start = timestamp;
       elapsed = (timestamp - animateFocus.start) / 1000;
       const t = Math.min(elapsed / duration, 1);
@@ -357,6 +398,8 @@
       }
     }
     requestAnimationFrame(animateFocus);
+
+    
 
     // Configuración de referencia visual de los módulos
     const tiposModulosButtons = document.querySelectorAll(".modulosButton");
