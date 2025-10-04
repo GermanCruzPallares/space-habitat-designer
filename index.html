@@ -11,49 +11,35 @@
       canvas {
         display: block;
       }
-    .listModules{
+      #menu {
         position: absolute;
-        z-index: 100;
-        float: left;
-        width: 300px;
-        height: 300px;
-        display: flex;
-        background-color: rgba(0, 0, 0, 0);
-        flex-direction: column;
-    }
-    .listModules *{
-        color:white;
-    }
-    .tiposModulos{
-        display: flex;
-        flex-direction: row;
-    }
-    .tiposModulos button{
-        background-color: rgb(0, 0, 0);
-
-    }
-  </style>
-</head>
-<body>
-    <div class="listModules">
-        <p>Modulos</p>
-        <div class="tiposModulos">
-            <button class="modulosButton">Rigido</button>
-            <button class="modulosButton">Inflable</button>
-            <button class="modulosButton">In situ</button>
-        </div>
-        <div>
-            <p>Tripulacion: <input id="Tripu"></p>
-        </div>
-        <div class="edificios">
-            <button>Puto Gym</button>
-            <button>Puto Aseo</button>
-            <button>Puto Room</button>
-            <button>Puto Pedro</button>
-            <button>Puto Sanchez</button>
-            <button>Puto </button>
-        </div>
+        top: 10px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 10px;
+        color: white;
+        cursor: grab;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="menu">
+      <div
+        class="module"
+        draggable="true"
+        data-url="./models/ModeloDePrueba.glb"
+      >
+        Modelo 1
+      </div>
+      <div
+        class="module"
+        draggable="true"
+        data-url="./models/ModeloDePrueba.glb"
+      >
+        Modelo 2
+      </div>
     </div>
+
     <script type="module">
       import * as THREE from "three";
       import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
