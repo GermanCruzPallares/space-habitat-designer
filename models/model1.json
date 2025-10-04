@@ -1,4 +1,4 @@
- {
+{
   "Marte": {
     "gravedad": "0.38 g",
     "temperatura": {
@@ -9,8 +9,16 @@
     "presion_atmosferica": "0.6% de la Tierra (~610 Pa)",
     "composicion_atmosfera": "95% CO2, 2.7% N2, 1.6% Ar",
     "radiacion": "Alta, sin magnetosfera",
-    "riesgos": ["tormentas de polvo globales", "radiación cósmica", "vientos débiles"],
-    "recursos_utilizables": ["regolito", "CO2 atmosférico", "agua congelada en polos y subsuelo"]
+    "riesgos": [
+      "tormentas de polvo globales",
+      "radiación cósmica",
+      "vientos débiles"
+    ],
+    "recursos_utilizables": [
+      "regolito",
+      "CO2 atmosférico",
+      "agua congelada en polos y subsuelo"
+    ]
   },
   "Luna": {
     "gravedad": "0.16 g",
@@ -21,7 +29,14 @@
     "presion_atmosferica": "Prácticamente nula (vacío)",
     "composicion_atmosfera": "Trazas de He, Ne, H2",
     "radiacion": "Muy alta, sin atmósfera ni magnetosfera",
-    "riesgos": ["micrometeoritos", "polvo lunar muy abrasivo", "radiación directa"],
-    "recursos_utilizables": ["regolito rico en oxígeno", "posible hielo en cráteres polares"]
+    "riesgos": [
+      "micrometeoritos",
+      "polvo lunar muy abrasivo",
+      "radiación directa"
+    ],
+    "recursos_utilizables": [
+      "regolito rico en oxígeno",
+      "posible hielo en cráteres polares"
+    ]
   }
 }

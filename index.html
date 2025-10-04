@@ -19,6 +19,42 @@
       canvas {
         display: block;
       }
+      /* --- Panel de necesidades --- */
+      .needsGrid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-top: 10px;
+      }
+
+      .needButton {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px;
+        border-radius: 12px;
+        font-weight: bold;
+        cursor: grab;
+        color: white;
+        text-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+        transition: all 0.25s ease;
+        font-size: 15px;
+        user-select: none;
+      }
+
+      .needButton:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 18px rgba(255, 255, 255, 0.4);
+        filter: brightness(1.2);
+      }
+
+      .needButton:active {
+        transform: scale(0.95);
+        filter: brightness(0.9);
+      }
 
       .listModules {
         position: absolute;
@@ -87,307 +123,463 @@
         margin: 0;
         font-weight: bold;
       }
+      .textoMuerte{
+          visibility: hidden;
+          color:red
+      }
     </style>
   </head>
   <body>
     <div class="listModules">
-      <p>Modulos</p>
+      <p>Marte</p>
       <div class="tiposModulos">
         <button class="modulosButton" draggable="true">Rigido</button>
         <button class="modulosButton" draggable="true">Inflable</button>
         <button class="modulosButton" draggable="true">In situ</button>
       </div>
+
       <div>
         <p>Tripulacion: <input id="Tripu" class="tripuInput" value="1" /></p>
+        <p>Años: <input id="fecha" class="tripuInput" value="1" /></p>
+        <p id="muerte" class="textoMuerte">No habra sobrevivientes!</p>
+      </div>
+
+      <div>
+        <p>Necesidades</p>
+        <div id="needsPanel" class="needsGrid"></div>
       </div>
     </div>
 
     <script type="module">
-  // Importamos las librerías principales de Three.js
-  import * as THREE from "three";
-  import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-  import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+      // Importamos las librerías principales de Three.js
+      import * as THREE from "three";
+      import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+      import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
-  // Datos de los módulos (modelos) con sus características
-  const moduleData = {
-    Rigido: {
-      url: "./models/Rigido.glb",
-      shape: "box",
-      tipe: "Rigido",
-      width: 2,
-      height: 1,
-      depth: 2,
-    },
-    Inflable: {
-      url: "./models/Inflable.glb",
-      shape: "cylinder",
-      tipe: "Inflable",
-      radius: 1,
-      height: 1.5,
-    },
-    "In situ": {
-      url: "./models/InSitu.glb",
-      shape: "box",
-      tipe: "Insitu",
-      width: 3,
-      height: 1,
-      depth: 3,
-    },
-  };
+      // data/necesidades.js
+      // Lista de necesidades de los tripulantes 🚀
 
-  // Creación del renderer (motor de renderizado WebGL)
-  let renderer;
-  try {
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.shadowMap.enabled = true; // habilita sombras
-    document.body.appendChild(renderer.domElement); // agrega el canvas al DOM
-  } catch (e) {
-    console.error("Renderer:", e);
-  }
+      export const NECESIDADES = [
+        { id: "sleep", name: "Sleep", icon: "🛏️", color: "#3b82f6" },
+        { id: "food", name: "Food", icon: "🍽️", color: "#10b981" },
+        { id: "hygiene", name: "Hygiene", icon: "🚿", color: "#06b6d4" },
+        { id: "storage", name: "Storage", icon: "📦", color: "#f59e0b" },
+        { id: "exercise", name: "Exercise", icon: "🏃", color: "#ef4444" },
+        { id: "medical", name: "Medical", icon: "⚕️", color: "#8b5cf6" },
+      ];
+      const REQUISITOS_BASE = {
+        sleep: 3, // Las camas no escalan con el tiempo, solo con tripulación
+        food: 15, // Escala con tripulación Y tiempo
+        hygiene: 8, // Escala con tripulación Y tiempo
+        storage: 12, // Escala con tripulación Y tiempo
+        exercise: 10, // Escala con tripulación Y tiempo
+        medical: 6, // Escala con tripulación Y tiempo (más tiempo = más riesgo)
+      };
+      const needsPanel = document.getElementById("needsPanel");
 
-  // Creación de la escena y cámara
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0a0a0a); // color de fondo
+      const NO_ESCALAN_TIEMPO = ["sleep"];
+      
+      NECESIDADES.forEach((mod) => {
+        const btn = document.createElement("div");
+        btn.className = "needButton";
+        btn.style.backgroundColor = mod.color;
+        btn.draggable = true;
 
-  const camera = new THREE.PerspectiveCamera(
-    60, // campo de visión
-    window.innerWidth / window.innerHeight, // relación de aspecto
-    0.1, // plano cercano
-    1000 // plano lejano
-  );
-  camera.position.set(10, 5, 7); // posición inicial de la cámara
+        // Crear estructura con span para el valor
+        btn.innerHTML = `
+    <span>${mod.icon} ${mod.name}</span>
+    <span class="need-value" id="need-${mod.id}" style="font-size: 11px; opacity: 0.8;"></span>
+  `;
+        btn.dataset.moduleId = mod.id;
 
-  // Controles de órbita (rotación de cámara con el mouse)
-  let controls;
-  try {
-    controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true; // suaviza el movimiento
-    controls.minPolarAngle = 0;
-    controls.maxPolarAngle = Math.PI / 2; // evita que la cámara pase por debajo del suelo
-  } catch (e) {
-    console.error("Controls:", e);
-  }
+        btn.addEventListener("dragstart", (e) => {
+          e.dataTransfer.setData("module-id", mod.id);
+        });
 
-  // Luces de la escena
-  try {
-    const ambient = new THREE.AmbientLight(0xffffff, 0.4); // luz ambiental
-    scene.add(ambient);
+        needsPanel.appendChild(btn);
+      });
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1); // luz direccional
-    dirLight.position.set(5, 10, 5);
-    dirLight.castShadow = true; // permite que proyecte sombras
-    dirLight.shadow.mapSize.width = 2048;
-    dirLight.shadow.mapSize.height = 2048;
-    dirLight.shadow.camera.near = 0.5;
-    dirLight.shadow.camera.far = 50;
-    dirLight.shadow.camera.left = -20;
-    dirLight.shadow.camera.right = 20;
-    dirLight.shadow.camera.top = 20;
-    dirLight.shadow.camera.bottom = -20;
-    scene.add(dirLight);
-  } catch (e) {
-    console.error("Luces:", e);
-  }
 
-  // Creación del suelo
-  let plane;
-  try {
-    const planeGeo = new THREE.PlaneGeometry(2000, 2000);
-    const planeMat = new THREE.MeshStandardMaterial({
-      color: 0x555555,
-      side: THREE.DoubleSide,
-    });
-    plane = new THREE.Mesh(planeGeo, planeMat);
-    plane.rotation.x = -Math.PI / 2; // lo rota para que quede plano en el eje Y
-    plane.position.y = 0;
-    plane.receiveShadow = true; // recibe sombras
-    scene.add(plane);
-  } catch (e) {
-    console.error("Suelo:", e);
-  }
+      //Funcion para calcular el tiempo
+      function calcularPosibilidad(){
+        
+        let texto = document.getElementById("muerte").style
+        texto.visibility = "visible"
+        
+    }
+      // Event listeners para actualizar en tiempo real
+      const tripuInput = document.getElementById("Tripu");
+      const fechaInput = document.getElementById("fecha");
 
-  // Loader para modelos GLB
-  const loader = new GLTFLoader();
-  const clickableObjects = []; // lista de objetos clicables
+      function actualizarNecesidades() {
+        const tripulacion = parseInt(tripuInput.value) || 1;
+        const años = parseFloat(fechaInput.value) || 1;
 
-  // Función para añadir modelos 3D a la escena
-  function addModel(url, position) {
-    loader.load(
-      url,
-      (gltf) => {
-        const model = gltf.scene.clone(); // clonamos el modelo cargado
-        model.position.set(position.x, position.y, position.z);
-        model.traverse((c) => {
-          if (c.isMesh) {
-            c.castShadow = true;
-            c.receiveShadow = true;
+        //const necesidades = calcularNecesidades(tripulacion, años);
+
+       
+      }
+
+      tripuInput.addEventListener("input", actualizarNecesidades);
+      fechaInput.addEventListener("input", actualizarNecesidades);
+
+      // Calcular al inicio
+      actualizarNecesidades();
+
+      
+      // Datos de los módulos (modelos) con sus características
+      const moduleData = {
+        Rigido: {
+          url: "./models/Rigido.glb",
+          shape: "box",
+          tipe: "Rigido",
+          width: 2,
+          height: 1,
+          depth: 2,
+        },
+        Inflable: {
+          url: "./models/Inflable.glb",
+          shape: "cylinder",
+          tipe: "Inflable",
+          radius: 1,
+          height: 1.5,
+        },
+        "In situ": {
+          url: "./models/InSitu.glb",
+          shape: "box",
+          tipe: "Insitu",
+          width: 3,
+          height: 1,
+          depth: 3,
+        },
+      };
+
+      // Creación del renderer (motor de renderizado WebGL)
+      let renderer;
+      try {
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.localClippingEnabled = true; // Habilita clipping
+        renderer.shadowMap.enabled = true; // habilita sombras
+        document.body.appendChild(renderer.domElement); // agrega el canvas al DOM
+      } catch (e) {
+        console.error("Renderer:", e);
+      }
+
+      // Creación de la escena y cámara
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0a0a0a); // color de fondo
+
+      const camera = new THREE.PerspectiveCamera(
+        60, // campo de visión
+        window.innerWidth / window.innerHeight, // relación de aspecto
+        0.1, // plano cercano
+        1000 // plano lejano
+      );
+      camera.position.set(10, 5, 7); // posición inicial de la cámara
+
+      // Controles de órbita (rotación de cámara con el mouse)
+      let controls;
+      try {
+        controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; // suaviza el movimiento
+        controls.minPolarAngle = 0;
+        controls.maxPolarAngle = Math.PI / 2; // evita que la cámara pase por debajo del suelo
+      } catch (e) {
+        console.error("Controls:", e);
+      }
+
+      // Luces de la escena
+      try {
+        const ambient = new THREE.AmbientLight(0xffffff, 0.4); // luz ambiental
+        scene.add(ambient);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1); // luz direccional
+        dirLight.position.set(5, 10, 5);
+        dirLight.castShadow = true; // permite que proyecte sombras
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
+        dirLight.shadow.camera.near = 0.5;
+        dirLight.shadow.camera.far = 50;
+        dirLight.shadow.camera.left = -20;
+        dirLight.shadow.camera.right = 20;
+        dirLight.shadow.camera.top = 20;
+        dirLight.shadow.camera.bottom = -20;
+        scene.add(dirLight);
+      } catch (e) {
+        console.error("Luces:", e);
+      }
+
+      // Creación del suelo
+      let plane;
+      try {
+        const planeGeo = new THREE.PlaneGeometry(2000, 2000);
+        const planeMat = new THREE.MeshStandardMaterial({
+          color: 0x555555,
+          side: THREE.DoubleSide,
+        });
+        plane = new THREE.Mesh(planeGeo, planeMat);
+        plane.rotation.x = -Math.PI / 2; // lo rota para que quede plano en el eje Y
+        plane.position.y = 0;
+        plane.receiveShadow = true; // recibe sombras
+        scene.add(plane);
+      } catch (e) {
+        console.error("Suelo:", e);
+      }
+
+      // Loader para modelos GLB
+      const loader = new GLTFLoader();
+      const clickableObjects = []; // lista de objetos clicables
+
+      // Función para añadir modelos 3D a la escena
+      function addModel(url, position) {
+        loader.load(
+          url,
+          (gltf) => {
+            const model = gltf.scene.clone(); // clonamos el modelo cargado
+            model.position.set(position.x, position.y, position.z);
+            model.traverse((c) => {
+              if (c.isMesh) {
+                c.castShadow = true;
+                c.receiveShadow = true;
+              }
+            });
+            scene.add(model);
+            clickableObjects.push(model);
+
+            // Datos del módulo cargado (debug)
+            const data = moduleData;
+            console.log(`Módulo añadido: "${data}"`);
+            console.log(`Forma: ${data.Rigido.shape}`);
+            if (moduleData.shape === "box")
+              console.log(
+                `Dimensiones (W x H x D): ${data.width} x ${data.height} x ${data.depth}`
+              );
+            else if (data.shape === "cylinder")
+              console.log(
+                `Dimensiones (Radio x Altura): ${data.radius} x ${data.height}`
+              );
+          },
+          // Progreso de carga
+          (xhr) =>
+            console.log(
+              `${((xhr.loaded / xhr.total) * 100).toFixed(2)}% cargado`
+            ),
+          // Manejo de errores
+          (err) => console.error("Error cargando modelo:", err)
+        );
+      }
+
+      // Drag & Drop desde los botones del HTML
+      const botones = document.querySelectorAll(".modulosButton");
+
+      // Relación entre tipo de módulo y su archivo GLB
+      const moduleFiles = {
+        Rigido: "./models/Rigido.glb",
+        Inflable: "./models/Inflable.glb",
+        "In situ": "./models/InSitu.glb",
+      };
+
+      // Configuramos el evento dragstart para cada botón
+      botones.forEach((btn) => {
+        btn.addEventListener("dragstart", (e) => {
+          const type = btn.innerText; // tipo de módulo
+          const url = moduleFiles[type]; // obtenemos la URL del modelo
+          e.dataTransfer.setData("model-url", url); // guardamos la URL en el evento
+        });
+      });
+
+      // Configuramos el drop sobre el canvas de renderizado
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+      renderer.domElement.addEventListener("dragover", (e) =>
+        e.preventDefault()
+      );
+
+      renderer.domElement.addEventListener("drop", (e) => {
+        e.preventDefault();
+
+        // Convertimos las coordenadas del mouse a coordenadas normalizadas
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+
+        // Intersectamos con un plano virtual Y=0 para colocar el modelo
+        const planeY = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+        const point = new THREE.Vector3();
+        raycaster.ray.intersectPlane(planeY, point);
+
+        // Obtenemos la URL del modelo arrastrado
+        const url = e.dataTransfer.getData("model-url");
+        if (!url) return;
+
+        // Añadimos el modelo en la posición calculada
+        addModel(url, point);
+      });
+
+      // Animación principal (loop de renderizado)
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      // Evento de redimensionamiento de ventana
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+      //////
+      const originalMaterials = new Map();
+      let focusedObject = null;
+
+      // Función para guardar materiales originales
+      function saveOriginalMaterials(object) {
+        object.traverse((child) => {
+          if (child.isMesh && !originalMaterials.has(child)) {
+            originalMaterials.set(child, child.material);
           }
         });
-        scene.add(model);
-        clickableObjects.push(model);
-
-        // Datos del módulo cargado (debug)
-        const data = moduleData;
-        console.log(`Módulo añadido: "${data}"`);
-        console.log(`Forma: ${data.Rigido.shape}`);
-        if (moduleData.shape === "box")
-          console.log(
-            `Dimensiones (W x H x D): ${data.width} x ${data.height} x ${data.depth}`
-          );
-        else if (data.shape === "cylinder")
-          console.log(
-            `Dimensiones (Radio x Altura): ${data.radius} x ${data.height}`
-          );
-      },
-      // Progreso de carga
-      (xhr) =>
-        console.log(`${((xhr.loaded / xhr.total) * 100).toFixed(2)}% cargado`),
-      // Manejo de errores
-      (err) => console.error("Error cargando modelo:", err)
-    );
-  }
-
-  // Drag & Drop desde los botones del HTML
-  const botones = document.querySelectorAll(".modulosButton");
-
-  // Relación entre tipo de módulo y su archivo GLB
-  const moduleFiles = {
-    Rigido: "./models/Rigido.glb",
-    Inflable: "./models/Inflable.glb",
-    "In situ": "./models/InSitu.glb",
-  };
-
-  // Configuramos el evento dragstart para cada botón
-  botones.forEach((btn) => {
-    btn.addEventListener("dragstart", (e) => {
-      const type = btn.innerText; // tipo de módulo
-      const url = moduleFiles[type]; // obtenemos la URL del modelo
-      e.dataTransfer.setData("model-url", url); // guardamos la URL en el evento
-    });
-  });
-
-  // Configuramos el drop sobre el canvas de renderizado
-  const raycaster = new THREE.Raycaster();
-  const mouse = new THREE.Vector2();
-  renderer.domElement.addEventListener("dragover", (e) => e.preventDefault());
-
-  renderer.domElement.addEventListener("drop", (e) => {
-    e.preventDefault();
-
-    // Convertimos las coordenadas del mouse a coordenadas normalizadas
-    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-    raycaster.setFromCamera(mouse, camera);
-
-    // Intersectamos con un plano virtual Y=0 para colocar el modelo
-    const planeY = new THREE.Plane(new THREE.Vector3(0, 1, 0), -1);
-    const point = new THREE.Vector3();
-    raycaster.ray.intersectPlane(planeY, point);
-
-    // Obtenemos la URL del modelo arrastrado
-    const url = e.dataTransfer.getData("model-url");
-    if (!url) return;
-
-    // Añadimos el modelo en la posición calculada
-    addModel(url, point);
-  });
-
-  // Animación principal (loop de renderizado)
-  function animate() {
-    requestAnimationFrame(animate);
-    controls.update();
-    renderer.render(scene, camera);
-  }
-  animate();
-
-  // Evento de redimensionamiento de ventana
-  window.addEventListener("resize", () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  });
-
-  // Sistema de enfoque (focus) al hacer clic en un modelo
-  let focusAnimation = null;
-  renderer.domElement.addEventListener("click", (e) => {
-    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(clickableObjects, true);
-    if (intersects.length > 0) {
-      let target = intersects[0].object;
-      while (target.parent && !clickableObjects.includes(target))
-        target = target.parent;
-      focusOnObject(target);
-    }
-  });
-
-  // Función para enfocar suavemente un objeto 3D
-  function focusOnObject(object) {
-    if (focusAnimation) cancelAnimationFrame(focusAnimation);
-    const box = new THREE.Box3().setFromObject(object);
-    const center = box.getCenter(new THREE.Vector3());
-    const size = box.getSize(new THREE.Vector3()).length();
-
-    const direction = camera.position.clone().sub(controls.target).normalize();
-    const distance = size * 2;
-    let newPos = center.clone().add(direction.multiplyScalar(distance));
-
-    if (newPos.y < 0.5) newPos.y = 0.5;
-
-    const duration = 0.5; // duración del movimiento
-    const startPos = camera.position.clone();
-    const startTarget = controls.target.clone();
-    let elapsed = 0;
-
-    // Animación de transición de cámara hacia el objeto
-    function animateFocus(timestamp) {
-      if (!animateFocus.start) animateFocus.start = timestamp;
-      elapsed = (timestamp - animateFocus.start) / 1000;
-      const t = Math.min(elapsed / duration, 1);
-      camera.position.lerpVectors(startPos, newPos, t);
-      controls.target.lerpVectors(startTarget, center, t);
-      controls.update();
-      if (t < 1) focusAnimation = requestAnimationFrame(animateFocus);
-      else {
-        controls.target.copy(center);
-        focusAnimation = null;
       }
-    }
-    requestAnimationFrame(animateFocus);
 
-    // Configuración de referencia visual de los módulos
-    const tiposModulosButtons = document.querySelectorAll(".modulosButton");
+      // Función para aplicar el efecto de transparencia
+      function applyTransparencyEffect(target) {
+        const box = new THREE.Box3().setFromObject(target);
+        const xCenter = (box.min.x + box.max.x) / 2;
+        const plane = new THREE.Plane(new THREE.Vector3(-1, 0, 0), xCenter);
 
-    tiposModulosButtons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const type = btn.innerText;
-        const data = moduleData[type];
-        if (!data) return;
+        target.traverse((child) => {
+          if (child.isMesh) {
+            child.material = child.material.clone();
+            child.material.clippingPlanes = [plane];
+            child.material.clipIntersection = false;
+            child.material.transparent = true;
+            child.material.opacity = 0.5;
+          }
+        });
+      }
 
-        // Mesh invisible de referencia (para tamaño y colisión)
-        let referenceMesh;
-        if (data.shape === "box") {
-          referenceMesh = new THREE.Mesh(
-            new THREE.BoxGeometry(data.width, data.height, data.depth),
-            new THREE.MeshBasicMaterial({ visible: false })
-          );
-        } else if (data.shape === "cylinder") {
-          referenceMesh = new THREE.Mesh(
-            new THREE.CylinderGeometry(data.radius, data.radius, data.height, 16),
-            new THREE.MeshBasicMaterial({ visible: false })
-          );
+      // Sistema de enfoque (focus) al hacer clic en un modelo
+      let focusAnimation = null;
+      renderer.domElement.addEventListener("click", (e) => {
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        calcularPosibilidad()
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(clickableObjects, true);
+
+        if (intersects.length > 0) {
+          let target = intersects[0].object;
+          while (target.parent && !clickableObjects.includes(target))
+            target = target.parent;
+
+          // Si hay un objeto previamente enfocado, restaurar sus materiales
+          if (focusedObject && focusedObject !== target) {
+            restoreOriginalMaterials(focusedObject);
+          }
+
+          // Guardar materiales originales del nuevo objeto
+          saveOriginalMaterials(target);
+
+          // Actualizar el objeto enfocado
+          focusedObject = target;
+
+          // Enfocar el objeto
+          focusOnObject(target);
+
+          // Aplicar efecto de transparencia
+          applyTransparencyEffect(target);
+        } else {
+          // Click en el vacío: restaurar objeto anterior si existe
+          if (focusedObject) {
+            restoreOriginalMaterials(focusedObject);
+            focusedObject = null;
+          }
         }
-
-        // Posicionamos el mesh sobre el suelo
-        referenceMesh.position.set(0, data.height / 2, 0);
-        scene.add(referenceMesh);
       });
-    });
-  }
-</script>
 
+      function restoreOriginalMaterials(object) {
+        object.traverse((child) => {
+          if (child.isMesh && originalMaterials.has(child)) {
+            child.material = originalMaterials.get(child);
+          }
+        });
+      }
+
+      // Función para enfocar suavemente un objeto 3D
+      function focusOnObject(object) {
+        if (focusAnimation) cancelAnimationFrame(focusAnimation);
+        const box = new THREE.Box3().setFromObject(object);
+        const center = box.getCenter(new THREE.Vector3());
+        const size = box.getSize(new THREE.Vector3()).length();
+
+        const direction = camera.position
+          .clone()
+          .sub(controls.target)
+          .normalize();
+        const distance = size * 2;
+        let newPos = center.clone().add(direction.multiplyScalar(distance));
+
+        if (newPos.y < 0.5) newPos.y = 0.5;
+
+        const duration = 0.5; // duración del movimiento
+        const startPos = camera.position.clone();
+        const startTarget = controls.target.clone();
+        let elapsed = 0;
+
+        // Animación de transición de cámara hacia el objeto
+        function animateFocus(timestamp) {
+          if (!animateFocus.start) animateFocus.start = timestamp;
+          elapsed = (timestamp - animateFocus.start) / 1000;
+          const t = Math.min(elapsed / duration, 1);
+          camera.position.lerpVectors(startPos, newPos, t);
+          controls.target.lerpVectors(startTarget, center, t);
+          controls.update();
+          if (t < 1) focusAnimation = requestAnimationFrame(animateFocus);
+          else {
+            controls.target.copy(center);
+            focusAnimation = null;
+          }
+        }
+        requestAnimationFrame(animateFocus);
+
+        // Configuración de referencia visual de los módulos
+        const tiposModulosButtons = document.querySelectorAll(".modulosButton");
+
+        tiposModulosButtons.forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const type = btn.innerText;
+            const data = moduleData[type];
+            if (!data) return;
+
+            // Mesh invisible de referencia (para tamaño y colisión)
+            let referenceMesh;
+            if (data.shape === "box") {
+              referenceMesh = new THREE.Mesh(
+                new THREE.BoxGeometry(data.width, data.height, data.depth),
+                new THREE.MeshBasicMaterial({ visible: false })
+              );
+            } else if (data.shape === "cylinder") {
+              referenceMesh = new THREE.Mesh(
+                new THREE.CylinderGeometry(
+                  data.radius,
+                  data.radius,
+                  data.height,
+                  16
+                ),
+                new THREE.MeshBasicMaterial({ visible: false })
+              );
+            }
+
+            // Posicionamos el mesh sobre el suelo
+            referenceMesh.position.set(0, data.height / 2, 0);
+            scene.add(referenceMesh);
+          });
+        });
+      }
+    </script>
   </body>
 </html>
