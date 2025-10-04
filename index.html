@@ -8,18 +8,14 @@
         margin: 0;
         overflow: hidden;
         font-family: "Arial", sans-serif;
-        background: linear-gradient(
-          135deg,
-          #0b0c1a,
-          #1a1f33
-        ); /* cielo oscuro espacial */
+        background: linear-gradient(135deg, #0b0c1a, #1a1f33);
         color: white;
       }
 
       canvas {
         display: block;
       }
-      /* --- Panel de necesidades --- */
+
       .needsGrid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -29,9 +25,10 @@
 
       .needButton {
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 8px;
+        gap: 4px;
         padding: 12px;
         border-radius: 12px;
         font-weight: bold;
@@ -56,6 +53,13 @@
         filter: brightness(0.9);
       }
 
+      .need-value {
+        font-size: 11px;
+        opacity: 0.9;
+        font-weight: bold;
+        margin-top: 2px;
+      }
+
       .listModules {
         position: absolute;
         z-index: 100;
@@ -65,7 +69,7 @@
         flex-direction: column;
         gap: 20px;
         margin-left: 10px;
-        background: rgba(10, 20, 50, 0.85); /* fondo azul semi-transparente */
+        background: rgba(10, 20, 50, 0.85);
         border-radius: 20px;
         box-shadow: 0 0 20px rgba(0, 50, 200, 0.7);
         backdrop-filter: blur(6px);
@@ -103,12 +107,12 @@
       .tripuInput {
         background-color: rgba(0, 0, 50, 0.3);
         color: #a0d8ff;
-        text-align: right;
         border: 0;
         border-bottom: 1px solid #00aaff;
         padding: 5px 8px;
         border-radius: 5px;
         transition: 0.3s;
+        width: 100%;
       }
 
       .tripuInput:focus {
@@ -119,30 +123,150 @@
         color: #ffffff;
       }
 
+      .selectInput {
+        background-color: rgba(0, 0, 50, 0.5);
+        color: #a0d8ff;
+        border: 1px solid #00aaff;
+        padding: 8px;
+        border-radius: 8px;
+        width: 100%;
+        font-size: 14px;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+
+      .selectInput:focus {
+        outline: none;
+        border: 2px solid #00ffff;
+        background-color: rgba(0, 50, 100, 0.6);
+        box-shadow: 0 0 10px rgba(0, 200, 255, 0.6);
+      }
+
+      .selectInput option {
+        background-color: #001f4d;
+        color: white;
+      }
+
+      .sliderContainer {
+        margin: 10px 0;
+      }
+
+      .sliderLabel {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 14px;
+      }
+
+      .sliderValue {
+        color: #00ffff;
+        font-weight: bold;
+        font-size: 16px;
+      }
+
+      input[type="range"] {
+        width: 100%;
+        height: 6px;
+        border-radius: 5px;
+        background: rgba(0, 170, 255, 0.3);
+        outline: none;
+        -webkit-appearance: none;
+      }
+
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: linear-gradient(145deg, #00aaff, #00ffff);
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+      }
+
+      input[type="range"]::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: linear-gradient(145deg, #00aaff, #00ffff);
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+        border: none;
+      }
+
       p {
         margin: 0;
         font-weight: bold;
       }
-      .textoMuerte{
-          visibility: hidden;
-          color:red
+
+      .textoMuerte {
+        margin-top: 10px;
+        padding: 8px;
+        border-radius: 8px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 14px;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .instrucciones {
+        background: rgba(30, 64, 175, 0.3);
+        border: 1px solid rgba(59, 130, 246, 0.5);
+        border-radius: 10px;
+        padding: 12px;
+        margin-top: 15px;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .instrucciones h4 {
+        margin: 0 0 8px 0;
+        color: #60a5fa;
+        font-size: 13px;
+      }
+
+      .instrucciones ul {
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      .instrucciones li {
+        margin: 4px 0;
+        color: #a0d8ff;
       }
     </style>
   </head>
   <body>
     <div class="listModules">
-      <p>Marte</p>
+      <p>Habitat Type</p>
       <div class="tiposModulos">
         <button class="modulosButton" draggable="true">Rigido</button>
         <button class="modulosButton" draggable="true">Inflable</button>
         <button class="modulosButton" draggable="true">In situ</button>
       </div>
 
-      <div>
-        <p>Tripulacion: <input id="Tripu" class="tripuInput" value="1" /></p>
-        <p>Años: <input id="fecha" class="tripuInput" value="1" /></p>
-        <p id="muerte" class="textoMuerte">No habra sobrevivientes!</p>
+      <div class="sliderContainer">
+        <div class="sliderLabel">
+          <span>Tripulacion</span>
+          <span class="sliderValue" id="tripuValue">4</span>
+        </div>
+        <input id="Tripu" type="range" min="2" max="12" value="4" step="1" />
       </div>
+
+      <div style="margin-top: 10px">
+        <p style="margin-bottom: 8px">Duracion de la Mision</p>
+        <select id="duracion" class="selectInput">
+          <option value="0.25">1 mes (corta estancia)</option>
+          <option value="0.5">6 meses (misión corta)</option>
+          <option value="1" selected>1 año (misión media)</option>
+          <option value="2">2 años (misión larga)</option>
+          <option value="5">5 años (base permanente)</option>
+          <option value="10">10+ años (colonia)</option>
+        </select>
+      </div>
+
+      <p id="textoMuerte">El modelo no es funcional</p>
 
       <div>
         <p>Necesidades</p>
@@ -151,15 +275,12 @@
     </div>
 
     <script type="module">
-      // Importamos las librerías principales de Three.js
       import * as THREE from "three";
       import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
       import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
-      // data/necesidades.js
-      // Lista de necesidades de los tripulantes 🚀
-
-      export const NECESIDADES = [
+      // Datos de necesidades
+      const NECESIDADES = [
         { id: "sleep", name: "Sleep", icon: "🛏️", color: "#3b82f6" },
         { id: "food", name: "Food", icon: "🍽️", color: "#10b981" },
         { id: "hygiene", name: "Hygiene", icon: "🚿", color: "#06b6d4" },
@@ -167,67 +288,226 @@
         { id: "exercise", name: "Exercise", icon: "🏃", color: "#ef4444" },
         { id: "medical", name: "Medical", icon: "⚕️", color: "#8b5cf6" },
       ];
+
       const REQUISITOS_BASE = {
-        sleep: 3, // Las camas no escalan con el tiempo, solo con tripulación
-        food: 15, // Escala con tripulación Y tiempo
-        hygiene: 8, // Escala con tripulación Y tiempo
-        storage: 12, // Escala con tripulación Y tiempo
-        exercise: 10, // Escala con tripulación Y tiempo
-        medical: 6, // Escala con tripulación Y tiempo (más tiempo = más riesgo)
+        sleep: 3,
+        food: 15,
+        hygiene: 8,
+        storage: 12,
+        exercise: 10,
+        medical: 6,
       };
-      const needsPanel = document.getElementById("needsPanel");
 
       const NO_ESCALAN_TIEMPO = ["sleep"];
-      
+
+      const needsPanel = document.getElementById("needsPanel");
+      const habitatsColocados = [];
+      let habitatSeleccionado = null;
+      let draggedNeedId = null;
+
+      // Crear botones de necesidades
       NECESIDADES.forEach((mod) => {
         const btn = document.createElement("div");
         btn.className = "needButton";
         btn.style.backgroundColor = mod.color;
         btn.draggable = true;
 
-        // Crear estructura con span para el valor
         btn.innerHTML = `
-    <span>${mod.icon} ${mod.name}</span>
-    <span class="need-value" id="need-${mod.id}" style="font-size: 11px; opacity: 0.8;"></span>
-  `;
+          <span>${mod.icon} ${mod.name}</span>
+          <span class="need-value" id="need-${mod.id}">0/0</span>
+        `;
         btn.dataset.moduleId = mod.id;
 
         btn.addEventListener("dragstart", (e) => {
+          draggedNeedId = mod.id;
           e.dataTransfer.setData("module-id", mod.id);
         });
 
         needsPanel.appendChild(btn);
       });
 
+      // Funcion para calcular necesidades con reduccion exponencial
+      function calcularNecesidades(tripulacion, años) {
+        const necesidades = {};
 
-      //Funcion para calcular el tiempo
-      function calcularPosibilidad(){
-        
-        let texto = document.getElementById("muerte").style
-        texto.visibility = "visible"
-        
-    }
-      // Event listeners para actualizar en tiempo real
-      const tripuInput = document.getElementById("Tripu");
-      const fechaInput = document.getElementById("fecha");
+        NECESIDADES.forEach((mod) => {
+          const base = REQUISITOS_BASE[mod.id];
+          if (NO_ESCALAN_TIEMPO.includes(mod.id)) {
+            // Sleep no escala con tiempo
+            necesidades[mod.id] = base * tripulacion;
+          } else {
+            // Reduccion exponencial: años^0.7 en vez de lineal
+            const factorTiempo = Math.pow(años, 0.7);
+            necesidades[mod.id] = base * tripulacion * factorTiempo;
+          }
+        });
 
-      function actualizarNecesidades() {
-        const tripulacion = parseInt(tripuInput.value) || 1;
-        const años = parseFloat(fechaInput.value) || 1;
+        return necesidades;
+      }
+      // Añadir modulos de necesidades
+      function addNeedModule(moduleId, position) {
+        const needData = NECESIDADES.find((n) => n.id === moduleId);
+        if (!needData) return;
 
-        //const necesidades = calcularNecesidades(tripulacion, años);
+        const volumenBase = 8;
+        const size = Math.cbrt(volumenBase) * 0.8;
 
-       
+        const geometry = new THREE.BoxGeometry(size, size, size);
+        const material = new THREE.MeshPhongMaterial({
+          color: needData.color,
+          emissive: needData.color,
+          emissiveIntensity: 0.2,
+          transparent: true,
+          opacity: 0.9,
+        });
+
+        const cube = new THREE.Mesh(geometry, material);
+        cube.position.set(position.x, size / 2, position.z);
+        cube.castShadow = true;
+        cube.receiveShadow = true;
+        scene.add(cube);
+
+        const edges = new THREE.EdgesGeometry(geometry);
+        const edgeLine = new THREE.LineSegments(
+          edges,
+          new THREE.LineBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.6,
+          })
+        );
+        edgeLine.position.copy(cube.position);
+        scene.add(edgeLine);
+
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+        canvas.width = 256;
+        canvas.height = 128;
+        context.fillStyle = "#ffffff";
+        context.font = "Bold 64px Arial";
+        context.textAlign = "center";
+        context.fillText(needData.icon, 128, 90);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        const spriteMaterial = new THREE.SpriteMaterial({
+          map: texture,
+          transparent: true,
+          opacity: 0.9,
+        });
+        const sprite = new THREE.Sprite(spriteMaterial);
+        sprite.position.copy(cube.position);
+        sprite.position.y += size * 0.8;
+        sprite.scale.set(2, 1, 1);
+        scene.add(sprite);
+
+        const moduloData = {
+          id: moduleId,
+          volumen: volumenBase,
+          mesh: cube,
+          edges: edgeLine,
+          sprite: sprite,
+          uid: Date.now() + Math.random(),
+        };
+
+        modulosColocados.push(moduloData);
+        clickableObjects.push(cube);
+
+        actualizarNecesidades();
+
+        console.log(
+          `Modulo ${needData.name} añadido con volumen ${volumenBase}m³`
+        );
       }
 
-      tripuInput.addEventListener("input", actualizarNecesidades);
-      fechaInput.addEventListener("input", actualizarNecesidades);
+      // Eliminar modulo
+      function eliminarModulo(modulo) {
+        scene.remove(modulo.mesh);
+        scene.remove(modulo.edges);
+        scene.remove(modulo.sprite);
 
-      // Calcular al inicio
+        const meshIndex = clickableObjects.indexOf(modulo.mesh);
+        if (meshIndex > -1) clickableObjects.splice(meshIndex, 1);
+
+        const moduloIndex = modulosColocados.indexOf(modulo);
+        if (moduloIndex > -1) modulosColocados.splice(moduloIndex, 1);
+
+        actualizarNecesidades();
+
+        console.log(`Modulo ${modulo.id} eliminado`);
+      }
+      // Actualizar UI de necesidades
+      function actualizarNecesidades() {
+        const tripulacion = parseInt(tripuInput.value) || 4;
+        const años = parseFloat(duracionInput.value) || 1;
+
+        const necesidadesRequeridas = calcularNecesidades(tripulacion, años);
+
+        const colocado = {};
+        NECESIDADES.forEach((mod) => {
+          colocado[mod.id] = 0;
+        });
+
+        habitatsColocados.forEach((habitat) => {
+          habitat.necesidades.forEach((need) => {
+            colocado[need.id] = (colocado[need.id] || 0) + need.volumen;
+          });
+        });
+
+        let todoValido = true;
+        NECESIDADES.forEach((mod) => {
+          const valueSpan = document.getElementById(`need-${mod.id}`);
+          const requerido = necesidadesRequeridas[mod.id];
+          const actual = colocado[mod.id] || 0;
+          const isValido = actual >= requerido;
+
+          if (!isValido) todoValido = false;
+          if (!isValido) {
+            todoValido = false;
+
+            // Seleccionamos el elemento
+            const textoMuerte = document.getElementById("textoMuerte");
+
+            // Cambiamos su visibilidad
+            textoMuerte.style.visibility = "hidden";
+          }
+
+          valueSpan.textContent = `${actual.toFixed(1)}/${requerido.toFixed(
+            1
+          )}`;
+          valueSpan.style.color = isValido ? "#4ade80" : "#f87171";
+        });
+
+        const totalNecesidades = habitatsColocados.reduce(
+          (sum, h) => sum + h.necesidades.length,
+          0
+        );
+
+        const mensajeMuerte = document.getElementById("muerte");
+        if (todoValido && totalNecesidades > 0) {
+          mensajeMuerte.textContent = "✅ Suficientes recursos!";
+          mensajeMuerte.style.color = "#4ade80";
+          mensajeMuerte.style.visibility = "visible";
+        } else if (totalNecesidades > 0) {
+          mensajeMuerte.textContent = "⚠️ Recursos insuficientes!";
+          mensajeMuerte.style.color = "#f87171";
+          mensajeMuerte.style.visibility = "visible";
+        }
+      }
+
+      const tripuInput = document.getElementById("Tripu");
+      const duracionInput = document.getElementById("duracion");
+      const tripuValue = document.getElementById("tripuValue");
+
+      tripuInput.addEventListener("input", (e) => {
+        tripuValue.textContent = e.target.value;
+        actualizarNecesidades();
+      });
+
+      duracionInput.addEventListener("change", actualizarNecesidades);
+
       actualizarNecesidades();
 
-      
-      // Datos de los módulos (modelos) con sus características
+      // Datos de modulos habitat
       const moduleData = {
         Rigido: {
           url: "./models/Rigido.glb",
@@ -254,50 +534,48 @@
         },
       };
 
-      // Creación del renderer (motor de renderizado WebGL)
+      // Setup Three.js
       let renderer;
       try {
         renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.localClippingEnabled = true; // Habilita clipping
-        renderer.shadowMap.enabled = true; // habilita sombras
-        document.body.appendChild(renderer.domElement); // agrega el canvas al DOM
+        renderer.localClippingEnabled = true;
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
       } catch (e) {
         console.error("Renderer:", e);
       }
 
-      // Creación de la escena y cámara
       const scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x0a0a0a); // color de fondo
+      scene.background = new THREE.Color(0x0a0a0a);
 
       const camera = new THREE.PerspectiveCamera(
-        60, // campo de visión
-        window.innerWidth / window.innerHeight, // relación de aspecto
-        0.1, // plano cercano
-        1000 // plano lejano
+        60,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
       );
-      camera.position.set(10, 5, 7); // posición inicial de la cámara
+      camera.position.set(10, 5, 7);
 
-      // Controles de órbita (rotación de cámara con el mouse)
       let controls;
       try {
         controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true; // suaviza el movimiento
+        controls.enableDamping = true;
         controls.minPolarAngle = 0;
-        controls.maxPolarAngle = Math.PI / 2; // evita que la cámara pase por debajo del suelo
+        controls.maxPolarAngle = Math.PI / 2;
       } catch (e) {
         console.error("Controls:", e);
       }
 
-      // Luces de la escena
+      // Luces
       try {
-        const ambient = new THREE.AmbientLight(0xffffff, 0.4); // luz ambiental
+        const ambient = new THREE.AmbientLight(0xffffff, 0.4);
         scene.add(ambient);
 
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1); // luz direccional
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
         dirLight.position.set(5, 10, 5);
-        dirLight.castShadow = true; // permite que proyecte sombras
+        dirLight.castShadow = true;
         dirLight.shadow.mapSize.width = 2048;
         dirLight.shadow.mapSize.height = 2048;
         dirLight.shadow.camera.near = 0.5;
@@ -311,7 +589,7 @@
         console.error("Luces:", e);
       }
 
-      // Creación del suelo
+      // Suelo
       let plane;
       try {
         const planeGeo = new THREE.PlaneGeometry(2000, 2000);
@@ -320,24 +598,23 @@
           side: THREE.DoubleSide,
         });
         plane = new THREE.Mesh(planeGeo, planeMat);
-        plane.rotation.x = -Math.PI / 2; // lo rota para que quede plano en el eje Y
+        plane.rotation.x = -Math.PI / 2;
         plane.position.y = 0;
-        plane.receiveShadow = true; // recibe sombras
+        plane.receiveShadow = true;
         scene.add(plane);
       } catch (e) {
         console.error("Suelo:", e);
       }
 
-      // Loader para modelos GLB
       const loader = new GLTFLoader();
-      const clickableObjects = []; // lista de objetos clicables
+      const clickableObjects = [];
 
-      // Función para añadir modelos 3D a la escena
+      // Añadir modelos GLB (Habitats)
       function addModel(url, position) {
         loader.load(
           url,
           (gltf) => {
-            const model = gltf.scene.clone(); // clonamos el modelo cargado
+            const model = gltf.scene.clone();
             model.position.set(position.x, position.y, position.z);
             model.traverse((c) => {
               if (c.isMesh) {
@@ -348,51 +625,136 @@
             scene.add(model);
             clickableObjects.push(model);
 
-            // Datos del módulo cargado (debug)
-            const data = moduleData;
-            console.log(`Módulo añadido: "${data}"`);
-            console.log(`Forma: ${data.Rigido.shape}`);
-            if (moduleData.shape === "box")
-              console.log(
-                `Dimensiones (W x H x D): ${data.width} x ${data.height} x ${data.depth}`
-              );
-            else if (data.shape === "cylinder")
-              console.log(
-                `Dimensiones (Radio x Altura): ${data.radius} x ${data.height}`
-              );
+            const habitatData = {
+              model: model,
+              necesidades: [],
+              position: position.clone(),
+              uid: Date.now() + Math.random(),
+            };
+
+            habitatsColocados.push(habitatData);
+            actualizarNecesidades();
+
+            console.log(`Habitat añadido`);
           },
-          // Progreso de carga
           (xhr) =>
             console.log(
               `${((xhr.loaded / xhr.total) * 100).toFixed(2)}% cargado`
             ),
-          // Manejo de errores
           (err) => console.error("Error cargando modelo:", err)
         );
       }
 
-      // Drag & Drop desde los botones del HTML
+      // Añadir necesidad dentro de un habitat (reducido y sin amontonamiento)
+      function addNeedToHabitat(habitat, needId, relativePosition) {
+        const needData = NECESIDADES.find((n) => n.id === needId);
+        if (!needData) return;
+
+        const volumenBase = 3; // Reducido de 6 a 3
+        const size = Math.cbrt(volumenBase) * 0.4; // Reducido de 0.6 a 0.4
+
+        const geometry = new THREE.BoxGeometry(size, size, size);
+        const material = new THREE.MeshPhongMaterial({
+          color: needData.color,
+          emissive: needData.color,
+          emissiveIntensity: 0.3,
+          transparent: true,
+          opacity: 0.95,
+        });
+
+        const cube = new THREE.Mesh(geometry, material);
+
+        // Sistema anti-amontonamiento: distribuir en espiral
+        const index = habitat.necesidades.length;
+        const angle = index * 0.8; // Angulo en espiral
+        const radius = 0.3 + index * 0.15; // Radio creciente
+        const offsetX = Math.cos(angle) * radius;
+        const offsetZ = Math.sin(angle) * radius;
+
+        const worldPos = new THREE.Vector3(
+          habitat.position.x + offsetX,
+          habitat.position.y + size / 2 + index * 0.05,
+          habitat.position.z + offsetZ
+        );
+
+        cube.position.copy(worldPos);
+        cube.castShadow = true;
+        cube.receiveShadow = true;
+
+        material.clippingPlanes = [];
+        material.clipShadows = true;
+
+        scene.add(cube);
+
+        // Sprite más pequeño
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+        canvas.width = 64;
+        canvas.height = 64;
+        context.fillStyle = "#ffffff";
+        context.font = "Bold 32px Arial";
+        context.textAlign = "center";
+        context.fillText(needData.icon, 32, 42);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        const spriteMaterial = new THREE.SpriteMaterial({
+          map: texture,
+          transparent: true,
+          opacity: 0.9,
+        });
+        const sprite = new THREE.Sprite(spriteMaterial);
+        sprite.position.copy(cube.position);
+        sprite.position.y += size * 0.6;
+        sprite.scale.set(0.8, 0.8, 1); // Reducido
+        scene.add(sprite);
+
+        const needObj = {
+          id: needId,
+          volumen: volumenBase,
+          mesh: cube,
+          sprite: sprite,
+          uid: Date.now() + Math.random(),
+        };
+
+        habitat.necesidades.push(needObj);
+        actualizarNecesidades();
+
+        // Inicialmente oculto
+        cube.visible = false;
+        sprite.visible = false;
+
+        console.log(`Necesidad ${needData.name} añadida`);
+      }
+
+      // Actualizar visibilidad de necesidades
+      function updateVisibilityForHabitat(habitat, isVisible) {
+        habitat.necesidades.forEach((need) => {
+          need.mesh.visible = isVisible;
+          need.sprite.visible = isVisible;
+        });
+      }
+
+      // Drag & Drop
       const botones = document.querySelectorAll(".modulosButton");
 
-      // Relación entre tipo de módulo y su archivo GLB
       const moduleFiles = {
         Rigido: "./models/Rigido.glb",
         Inflable: "./models/Inflable.glb",
         "In situ": "./models/InSitu.glb",
       };
 
-      // Configuramos el evento dragstart para cada botón
       botones.forEach((btn) => {
         btn.addEventListener("dragstart", (e) => {
-          const type = btn.innerText; // tipo de módulo
-          const url = moduleFiles[type]; // obtenemos la URL del modelo
-          e.dataTransfer.setData("model-url", url); // guardamos la URL en el evento
+          const type = btn.innerText;
+          const url = moduleFiles[type];
+          e.dataTransfer.setData("model-url", url);
+          draggedNeedId = null;
         });
       });
 
-      // Configuramos el drop sobre el canvas de renderizado
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
+
       renderer.domElement.addEventListener("dragover", (e) =>
         e.preventDefault()
       );
@@ -400,107 +762,33 @@
       renderer.domElement.addEventListener("drop", (e) => {
         e.preventDefault();
 
-        // Convertimos las coordenadas del mouse a coordenadas normalizadas
         mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
         mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
         raycaster.setFromCamera(mouse, camera);
 
-        // Intersectamos con un plano virtual Y=0 para colocar el modelo
         const planeY = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
         const point = new THREE.Vector3();
         raycaster.ray.intersectPlane(planeY, point);
 
-        // Obtenemos la URL del modelo arrastrado
         const url = e.dataTransfer.getData("model-url");
-        if (!url) return;
+        if (url) {
+          addModel(url, point);
+          return;
+        }
 
-        // Añadimos el modelo en la posición calculada
-        addModel(url, point);
-      });
-
-      // Animación principal (loop de renderizado)
-      function animate() {
-        requestAnimationFrame(animate);
-        controls.update();
-        renderer.render(scene, camera);
-      }
-      animate();
-
-      // Evento de redimensionamiento de ventana
-      window.addEventListener("resize", () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-      });
-      //////
-      const originalMaterials = new Map();
-      let focusedObject = null;
-
-      // Función para guardar materiales originales
-      function saveOriginalMaterials(object) {
-        object.traverse((child) => {
-          if (child.isMesh && !originalMaterials.has(child)) {
-            originalMaterials.set(child, child.material);
-          }
-        });
-      }
-
-      // Función para aplicar el efecto de transparencia
-      function applyTransparencyEffect(target) {
-        const box = new THREE.Box3().setFromObject(target);
-        const xCenter = (box.min.x + box.max.x) / 2;
-        const plane = new THREE.Plane(new THREE.Vector3(-1, 0, 0), xCenter);
-
-        target.traverse((child) => {
-          if (child.isMesh) {
-            child.material = child.material.clone();
-            child.material.clippingPlanes = [plane];
-            child.material.clipIntersection = false;
-            child.material.transparent = true;
-            child.material.opacity = 0.5;
-          }
-        });
-      }
-
-      // Sistema de enfoque (focus) al hacer clic en un modelo
-      let focusAnimation = null;
-      renderer.domElement.addEventListener("click", (e) => {
-        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-        calcularPosibilidad()
-        raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObjects(clickableObjects, true);
-
-        if (intersects.length > 0) {
-          let target = intersects[0].object;
-          while (target.parent && !clickableObjects.includes(target))
-            target = target.parent;
-
-          // Si hay un objeto previamente enfocado, restaurar sus materiales
-          if (focusedObject && focusedObject !== target) {
-            restoreOriginalMaterials(focusedObject);
-          }
-
-          // Guardar materiales originales del nuevo objeto
-          saveOriginalMaterials(target);
-
-          // Actualizar el objeto enfocado
-          focusedObject = target;
-
-          // Enfocar el objeto
-          focusOnObject(target);
-
-          // Aplicar efecto de transparencia
-          applyTransparencyEffect(target);
-        } else {
-          // Click en el vacío: restaurar objeto anterior si existe
-          if (focusedObject) {
-            restoreOriginalMaterials(focusedObject);
-            focusedObject = null;
-          }
+        const moduleId = e.dataTransfer.getData("module-id");
+        if (moduleId && habitatSeleccionado) {
+          const relativePos = new THREE.Vector3(0, 0, 0);
+          addNeedToHabitat(habitatSeleccionado, moduleId, relativePos);
         }
       });
 
+      // --- Variables globales ---
+      const originalMaterials = new Map();
+      let focusedObject = null;
+      let focusAnimation = null;
+
+      // --- Función para restaurar materiales ---
       function restoreOriginalMaterials(object) {
         object.traverse((child) => {
           if (child.isMesh && originalMaterials.has(child)) {
@@ -509,77 +797,107 @@
         });
       }
 
-      // Función para enfocar suavemente un objeto 3D
+      // --- Función de enfoque ---
       function focusOnObject(object) {
-        if (focusAnimation) cancelAnimationFrame(focusAnimation);
+        // Cancelar animación anterior
+        if (focusAnimation) {
+          cancelAnimationFrame(focusAnimation);
+          const geometry = new THREE.BoxGeometry(0.4, 0.4, 0.4);
+          const material = new THREE.MeshBasicMaterial({ color: 0x3263c7 });
+          const cube = new THREE.Mesh(geometry, material);
+          scene.add(cube);
+          cube.position.set(object.x, object.y, -3);
+        }
+        // Restaurar objeto anterior si existe y es distinto
+        if (focusedObject && focusedObject !== object) {
+          restoreOriginalMaterials(focusedObject);
+        }
+        focusedObject = object;
+
+        // Guardar materiales originales si no están guardados
+        object.traverse((child) => {
+          if (child.isMesh && !originalMaterials.has(child)) {
+            originalMaterials.set(child, child.material);
+          }
+        });
+
+        // --- Transparencia mitad vertical ---
         const box = new THREE.Box3().setFromObject(object);
+        const xCenter = (box.min.x + box.max.x) / 2;
+        const plane = new THREE.Plane(new THREE.Vector3(-1, 0, 0), xCenter);
+
+        object.traverse((child) => {
+          if (child.isMesh) {
+            child.material = child.material.clone();
+            child.material.clippingPlanes = [plane];
+            child.material.clipIntersection = false;
+            child.material.transparent = true;
+            child.material.opacity = 0.5;
+          }
+        });
+
+        // --- Movimiento de cámara ---
         const center = box.getCenter(new THREE.Vector3());
         const size = box.getSize(new THREE.Vector3()).length();
-
         const direction = camera.position
           .clone()
           .sub(controls.target)
           .normalize();
         const distance = size * 2;
         let newPos = center.clone().add(direction.multiplyScalar(distance));
-
         if (newPos.y < 0.5) newPos.y = 0.5;
 
-        const duration = 0.5; // duración del movimiento
+        const duration = 0.5; // segundos
         const startPos = camera.position.clone();
         const startTarget = controls.target.clone();
         let elapsed = 0;
 
-        // Animación de transición de cámara hacia el objeto
-        function animateFocus(timestamp) {
-          if (!animateFocus.start) animateFocus.start = timestamp;
-          elapsed = (timestamp - animateFocus.start) / 1000;
+        function animateFocus() {
+          elapsed += 0.016; // aprox 60fps
           const t = Math.min(elapsed / duration, 1);
+
           camera.position.lerpVectors(startPos, newPos, t);
           controls.target.lerpVectors(startTarget, center, t);
           controls.update();
+
           if (t < 1) focusAnimation = requestAnimationFrame(animateFocus);
-          else {
-            controls.target.copy(center);
-            focusAnimation = null;
-          }
         }
-        requestAnimationFrame(animateFocus);
 
-        // Configuración de referencia visual de los módulos
-        const tiposModulosButtons = document.querySelectorAll(".modulosButton");
-
-        tiposModulosButtons.forEach((btn) => {
-          btn.addEventListener("click", () => {
-            const type = btn.innerText;
-            const data = moduleData[type];
-            if (!data) return;
-
-            // Mesh invisible de referencia (para tamaño y colisión)
-            let referenceMesh;
-            if (data.shape === "box") {
-              referenceMesh = new THREE.Mesh(
-                new THREE.BoxGeometry(data.width, data.height, data.depth),
-                new THREE.MeshBasicMaterial({ visible: false })
-              );
-            } else if (data.shape === "cylinder") {
-              referenceMesh = new THREE.Mesh(
-                new THREE.CylinderGeometry(
-                  data.radius,
-                  data.radius,
-                  data.height,
-                  16
-                ),
-                new THREE.MeshBasicMaterial({ visible: false })
-              );
-            }
-
-            // Posicionamos el mesh sobre el suelo
-            referenceMesh.position.set(0, data.height / 2, 0);
-            scene.add(referenceMesh);
-          });
-        });
+        animateFocus();
       }
+
+      // --- Evento click ---
+      renderer.domElement.addEventListener("click", (e) => {
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(clickableObjects, true);
+
+        if (intersects.length > 0) {
+          let target = intersects[0].object;
+          while (target.parent && !clickableObjects.includes(target))
+            target = target.parent;
+          focusOnObject(target);
+        } else if (focusedObject) {
+          restoreOriginalMaterials(focusedObject);
+          focusedObject = null;
+        }
+      });
+
+      // Animation loop
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      // Resize
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
     </script>
   </body>
 </html>
