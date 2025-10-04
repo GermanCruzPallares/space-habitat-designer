@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Three.js GLB Loader con Superficie</title>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+      canvas {
+        display: block;
+      }
+    .listModules{
+        position: absolute;
+        z-index: 100;
+        float: left;
+        width: 300px;
+        height: 300px;
+        display: flex;
+        background-color: rgba(0, 0, 0, 0);
+        flex-direction: column;
+        margin-left: 10px;
+    }
+    .listModules *{
+        color:white;
+    }
+    .tiposModulos{
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-evenly;
+    }
+    .modulosButton{
+        background-color: rgba(101, 101, 101, 0.382);
+        padding: 10px;
+        border-radius: 10px;
+    }
+
+    .modulosButton:hover{
+        scale:1.1;
+        transition: 1s;
+    }
+
+    .edificios{
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+
+    }
+    .edificios button{
+        background-color: rgba(101, 101, 101, 0.382);
+        color:white;
+        padding: 5px;
+        margin:5px;
+    }
+
+    .edificios button:hover{
+        scale: 1.1;
+        transition: 1s;
+    }
+
+    .tripuInput{
+        background-color: rgb(0,0,0,0);
+        color:white;
+        text-align: right;
+        border: 0px;
+        border-bottom: 1px solid black;
+    }
+  </style>
+</head>
+<body>
+    <div class="listModules">
+        <p>Modulos</p>
+        <div class="tiposModulos">
+            <button class="modulosButton">Rigido</button>
+            <button class="modulosButton">Inflable</button>
+            <button class="modulosButton">In situ</button>
+        </div>
+        <div>
+            <p>Tripulacion: <input id="Tripu" class="tripuInput" value="1"></p>
+        </div>
+        <div class="edificios">
+            <button>Puto Gym</button>
+            <button>Puto Aseo</button>
+            <button>Puto Room</button>
+            <button>Puto Pedro</button>
+            <button>Puto Sanchez</button>
+            <button>Puto Perro</button>
+        </div>
+    </div>
+    <script type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+      import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+
+      // Renderer
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.shadowMap.enabled = true; // activar sombras
+      document.body.appendChild(renderer.domElement);
+
+      // Scene y cámara
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0a0a0a);
+
+      const camera = new THREE.PerspectiveCamera(
+        60,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      camera.position.set(10, 5, 7);
+
+      // Controles
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+
+      // Luces
+      const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+      scene.add(ambient);
+
+      const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+      dirLight.position.set(5, 10, 5);
+      dirLight.castShadow = true;
+      dirLight.shadow.mapSize.width = 1024;
+      dirLight.shadow.mapSize.height = 1024;
+      scene.add(dirLight);
+
+      // Superficie / plano
+      const planeGeometry = new THREE.PlaneGeometry(2000, 2000);
+      const planeMaterial = new THREE.MeshStandardMaterial({
+        color: 0x555555,
+        side: THREE.DoubleSide,
+      });
+      const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+      plane.rotation.x = -Math.PI / 2;
+      plane.position.y = 0;
+      plane.receiveShadow = true;
+      scene.add(plane);
+
+      // Loader GLB
+      const loader = new GLTFLoader();
+      loader.load(
+        "./models/ModeloDePrueba.glb",
+        (gltf) => {
+          const model = gltf.scene;
+
+          // Ajustar altura para que esté sobre el plano
+          const box = new THREE.Box3().setFromObject(model);
+          const height = box.max.y - box.min.y;
+          model.position.y = 1;
+
+          model.traverse((child) => {
+            if (child.isMesh) {
+              child.castShadow = true;
+            }
+          });
+
+          scene.add(model);
+          console.log("Modelo cargado", gltf);
+        },
+        (xhr) => {
+          console.log(
+            `${((xhr.loaded / xhr.total) * 100).toFixed(2)}% cargado`
+          );
+        },
+        (error) => {
+          console.error("Error cargando el modelo:", error);
+        }
+      );
+
+      // Animación
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      // Resize
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    </script>
+  </body>
+</html>
