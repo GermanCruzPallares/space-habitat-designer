@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Three.js GLB Loader con Superficie</title>
+    <title>Three.js Drag & Drop con Altura Fija</title>
     <style>
       body {
         margin: 0;
@@ -11,22 +11,52 @@
       canvas {
         display: block;
       }
+      #menu {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 10px;
+        color: white;
+        cursor: grab;
+      }
     </style>
   </head>
   <body>
+    <div id="menu">
+      <div
+        class="module"
+        draggable="true"
+        data-url="./models/ModeloDePrueba.glb"
+      >
+        Modelo 1
+      </div>
+      <div
+        class="module"
+        draggable="true"
+        data-url="./models/ModeloDePrueba.glb"
+      >
+        Modelo 2
+      </div>
+    </div>
+
     <script type="module">
       import * as THREE from "three";
       import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
       import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
-      // Renderer
-      const renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(window.devicePixelRatio);
-      renderer.shadowMap.enabled = true; // activar sombras
-      document.body.appendChild(renderer.domElement);
+      let renderer;
+      try {
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.body.appendChild(renderer.domElement);
+      } catch (err) {
+        console.error("Error al inicializar renderer:", err);
+      }
 
-      // Scene y cámara
       const scene = new THREE.Scene();
       scene.background = new THREE.Color(0x0a0a0a);
 
@@ -38,78 +68,197 @@
       );
       camera.position.set(10, 5, 7);
 
-      // Controles
-      const controls = new OrbitControls(camera, renderer.domElement);
-      controls.enableDamping = true;
+      let controls;
+      try {
+        controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+      } catch (err) {
+        console.error("Error al inicializar OrbitControls:", err);
+      }
 
-      // Luces
-      const ambient = new THREE.AmbientLight(0xffffff, 0.4);
-      scene.add(ambient);
+      try {
+        const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambient);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(5, 10, 5);
+        dirLight.castShadow = true;
+        dirLight.shadow.camera.left = -50;
+        dirLight.shadow.camera.right = 50;
+        dirLight.shadow.camera.top = 50;
+        dirLight.shadow.camera.bottom = -50;
+        dirLight.shadow.camera.near = 1;
+        dirLight.shadow.camera.far = 200;
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
+        scene.add(dirLight);
+      } catch (err) {
+        console.error("Error al crear luces:", err);
+      }
 
-      const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-      dirLight.position.set(5, 10, 5);
-      dirLight.castShadow = true;
-      dirLight.shadow.mapSize.width = 1024;
-      dirLight.shadow.mapSize.height = 1024;
-      scene.add(dirLight);
+      let plane;
+      try {
+        const planeGeometry = new THREE.PlaneGeometry(2000, 2000);
+        const planeMaterial = new THREE.MeshStandardMaterial({
+          color: 0x555555,
+          side: THREE.DoubleSide,
+        });
+        plane = new THREE.Mesh(planeGeometry, planeMaterial);
+        plane.rotation.x = -Math.PI / 2;
+        plane.position.y = 0;
+        plane.receiveShadow = true;
+        scene.add(plane);
+      } catch (err) {
+        console.error("Error al crear suelo:", err);
+      }
 
-      // Superficie / plano
-      const planeGeometry = new THREE.PlaneGeometry(2000, 2000);
-      const planeMaterial = new THREE.MeshStandardMaterial({
-        color: 0x555555,
-        side: THREE.DoubleSide,
-      });
-      const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-      plane.rotation.x = -Math.PI / 2;
-      plane.position.y = 0;
-      plane.receiveShadow = true;
-      scene.add(plane);
-
-      // Loader GLB
       const loader = new GLTFLoader();
-      loader.load(
-        "./models/ModeloDePrueba.glb",
-        (gltf) => {
-          const model = gltf.scene;
+      const clickableObjects = [];
 
-          // Ajustar altura para que esté sobre el plano
-          const box = new THREE.Box3().setFromObject(model);
-          const height = box.max.y - box.min.y;
-          model.position.y = 1;
-
-          model.traverse((child) => {
-            if (child.isMesh) {
-              child.castShadow = true;
+      function addModel(url, position) {
+        try {
+          loader.load(
+            url,
+            (gltf) => {
+              try {
+                const model = gltf.scene.clone();
+                model.position.set(position.x, position.y, position.z);
+                model.traverse((child) => {
+                  try {
+                    if (child.isMesh) {
+                      child.castShadow = true;
+                      child.receiveShadow = true;
+                    }
+                  } catch (e) {
+                    console.error("Error traverse mesh:", e);
+                  }
+                });
+                scene.add(model);
+                clickableObjects.push(model); // Solo modelos son clickeables
+                console.log("Modelo añadido", url);
+              } catch (e) {
+                console.error("Error al procesar GLTF:", e);
+              }
+            },
+            (xhr) => {
+              console.log(
+                `${((xhr.loaded / xhr.total) * 100).toFixed(2)}% cargado`
+              );
+            },
+            (err) => {
+              console.error("Error cargando modelo:", err);
             }
-          });
-
-          scene.add(model);
-          console.log("Modelo cargado", gltf);
-        },
-        (xhr) => {
-          console.log(
-            `${((xhr.loaded / xhr.total) * 100).toFixed(2)}% cargado`
           );
-        },
-        (error) => {
-          console.error("Error cargando el modelo:", error);
+        } catch (e) {
+          console.error("Excepción al añadir modelo:", e);
         }
-      );
+      }
 
-      // Animación
+      const modules = document.querySelectorAll(".module");
+      modules.forEach((m) => {
+        m.addEventListener("dragstart", (e) => {
+          try {
+            e.dataTransfer.setData("model-url", m.dataset.url);
+          } catch (err) {
+            console.error("Error en dragstart:", err);
+          }
+        });
+      });
+
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+
+      renderer.domElement.addEventListener("dragover", (e) => {
+        e.preventDefault();
+      });
+      renderer.domElement.addEventListener("drop", (e) => {
+        e.preventDefault();
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+
+        const planeY = new THREE.Plane(new THREE.Vector3(0, 1, 0), -1);
+        const point = new THREE.Vector3();
+        raycaster.ray.intersectPlane(planeY, point);
+
+        const url = e.dataTransfer.getData("model-url");
+        if (url) addModel(url, { x: point.x, y: 1, z: point.z });
+      });
+
       function animate() {
-        requestAnimationFrame(animate);
-        controls.update();
-        renderer.render(scene, camera);
+        try {
+          requestAnimationFrame(animate);
+          controls.update();
+          renderer.render(scene, camera);
+        } catch (err) {
+          console.error("Error en animate:", err);
+        }
       }
       animate();
 
-      // Resize
       window.addEventListener("resize", () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        try {
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(window.innerWidth, window.innerHeight);
+        } catch (err) {
+          console.error("Error en resize:", err);
+        }
       });
+
+      let focusAnimation = null;
+
+      renderer.domElement.addEventListener("click", (e) => {
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+
+        const intersects = raycaster.intersectObjects(clickableObjects, true);
+        if (intersects.length > 0) {
+          let target = intersects[0].object;
+          while (target.parent && !clickableObjects.includes(target))
+            target = target.parent;
+          focusOnObject(target);
+        }
+      });
+
+      function focusOnObject(object) {
+        if (focusAnimation) cancelAnimationFrame(focusAnimation);
+
+        const box = new THREE.Box3().setFromObject(object);
+        const center = box.getCenter(new THREE.Vector3());
+        const size = box.getSize(new THREE.Vector3()).length();
+
+        // Dirección desde cámara actual hacia target
+        const direction = camera.position
+          .clone()
+          .sub(controls.target)
+          .normalize();
+        const distance = size * 2;
+        const newPos = center.clone().add(direction.multiplyScalar(distance));
+
+        const duration = 0.5;
+        const startPos = camera.position.clone();
+        const startTarget = controls.target.clone();
+        let elapsed = 0;
+
+        function animateFocus(timestamp) {
+          if (!animateFocus.start) animateFocus.start = timestamp;
+          elapsed = (timestamp - animateFocus.start) / 1000;
+          const t = Math.min(elapsed / duration, 1);
+
+          camera.position.lerpVectors(startPos, newPos, t);
+          controls.target.lerpVectors(startTarget, center, t);
+          controls.update();
+
+          if (t < 1) focusAnimation = requestAnimationFrame(animateFocus);
+          else {
+            controls.target.copy(center);
+            focusAnimation = null;
+          }
+        }
+
+        requestAnimationFrame(animateFocus);
+      }
     </script>
   </body>
 </html>
